@@ -9,4 +9,10 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     List<Application> findByApplicantUserIdAndStatus(UUID applicantUserId, Application.Status status);
     List<Application> findByApplicantUserId(UUID applicantUserId);
     List<Application> findByServiceId(UUID serviceId);
+
+    // CFC queue queries
+    List<Application> findByStatus(Application.Status status);
+    List<Application> findByAssignedEmIdAndStatusIn(UUID emId, List<Application.Status> statuses);
+    List<Application> findByAssignedClerkIdAndStatus(UUID clerkId, Application.Status status);
+    List<Application> findByApplicantUserIdOrderByCreatedAtDesc(UUID applicantUserId);
 }

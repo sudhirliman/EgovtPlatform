@@ -17,7 +17,22 @@ import java.util.UUID;
 @NoArgsConstructor
 public class Application {
 
-    public enum Status { DRAFT, SUBMITTED, IN_PROGRESS, APPROVED, REJECTED, DISPATCHED }
+    public enum Status {
+        DRAFT, SUBMITTED, IN_PROGRESS, APPROVED, REJECTED, DISPATCHED,
+        // CFC multi-role statuses
+        FORWARDED_TO_EM,
+        REVERTEDBYIO,
+        FORWARDED_TO_CLERK,
+        REVERTEDBYEM,
+        REVERTED_BY_ASSISTANT_SENIOR_CLERK,
+        APPROVED_BY_ASSISTANT_SENIOR_CLERK,
+        APPROVED_BY_EM,
+        CHALLAN_GENERATED,
+        DEPTCHALLANRECIEPT,
+        CERTIFICATECREATED,
+        CERTIFICATE_UPLOADED,
+        CFCCERTIFICATE
+    }
 
     @Id
     @GeneratedValue
@@ -33,8 +48,27 @@ public class Application {
     private UUID applicantUserId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 60)
     private Status status = Status.DRAFT;
+
+    // CFC assignment tracking
+    @Column(name = "assigned_io_id")
+    private UUID assignedIoId;
+
+    @Column(name = "assigned_em_id")
+    private UUID assignedEmId;
+
+    @Column(name = "assigned_clerk_id")
+    private UUID assignedClerkId;
+
+    @Column(name = "current_assignee_id")
+    private UUID currentAssigneeId;
+
+    @Column(name = "certificate_path", length = 500)
+    private String certificatePath;
+
+    @Column(name = "certificate_uploaded_at")
+    private Instant certificateUploadedAt;
 
     // Dynamic form submission stored as a snapshot - later FormTemplate changes
     // do not alter data already submitted (see SRS FR-3.4).

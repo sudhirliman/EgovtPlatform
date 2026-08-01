@@ -3,12 +3,16 @@ package com.egov.platform.rbac;
 import com.egov.platform.rbac.dto.AssignRoleRequest;
 import com.egov.platform.rbac.dto.CreateUserRequest;
 import com.egov.platform.rbac.dto.UserRoleResponse;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -29,15 +33,25 @@ public class AppUserController {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /** Safe projection — never exposes passwordHash. */
+    public record UserView(UUID id, String name, String username, String mobile, String email,
+                            boolean active, Instant createdAt) {
+        static UserView from(AppUser u) {
+            return new UserView(u.getId(), u.getName(), u.getUsername(), u.getMobile(),
+                    u.getEmail(), u.isActive(), u.getCreatedAt());
+        }
+    }
+
     @GetMapping("/api/users")
-    public List<AppUser> list() {
-        return appUserRepository.findAll();
+    @PreAuthorize("hasPermission(null, 'USER_MANAGE')")
+    public List<UserView> list() {
+        return appUserRepository.findAll().stream().map(UserView::from).toList();
     }
 
     @PostMapping("/api/users")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasPermission(null, 'USER_MANAGE')")
-    public AppUser create(@RequestBody CreateUserRequest request) {
+    public UserView create(@Valid @RequestBody CreateUserRequest request) {
         AppUser user = new AppUser();
         user.setName(request.name());
         user.setUsername(request.username());
@@ -46,18 +60,19 @@ public class AppUserController {
         if (request.password() != null && !request.password().isBlank()) {
             user.setPasswordHash(passwordEncoder.encode(request.password()));
         }
-        return appUserRepository.save(user);
+        return UserView.from(appUserRepository.save(user));
     }
 
-    /** All users holding a given role - this is what powers the "eligible officer" dropdown. */
+    /** All users holding a given role — powers the eligible-officer dropdown. */
     @GetMapping("/api/users/by-role/{roleId}")
-    public List<AppUser> byRole(@PathVariable UUID roleId) {
-        return userRoleRepository.findByRoleId(roleId).stream().map(UserRole::getUser).distinct().toList();
+    public List<UserView> byRole(@PathVariable UUID roleId) {
+        return userRoleRepository.findByRoleId(roleId).stream()
+                .map(UserRole::getUser)
+                .distinct()
+                .map(UserView::from)
+                .toList();
     }
 
-    // @Transactional: see RoleResponse's javadoc - UserRole.role.permissions is
-    // lazy, and would throw LazyInitializationException at serialization time
-    // (open-in-view=false) if we returned the raw entity graph instead of a DTO.
     @Transactional(readOnly = true)
     @GetMapping("/api/users/{userId}/roles")
     public List<UserRoleResponse> rolesFor(@PathVariable UUID userId) {

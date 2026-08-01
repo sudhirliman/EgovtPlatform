@@ -63,6 +63,7 @@ export const rolesApi = {
   list: () => request("/api/roles"),
   create: (data) => request("/api/roles", { method: "POST", body: JSON.stringify(data) }),
   update: (id, data) => request(`/api/roles/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  delete: (id) => request(`/api/roles/${id}`, { method: "DELETE" }),
 };
 
 export const permissionsApi = {
@@ -72,8 +73,11 @@ export const permissionsApi = {
 export const usersApi = {
   list: () => request("/api/users"),
   create: (data) => request("/api/users", { method: "POST", body: JSON.stringify(data) }),
+  update: (id, data) => request(`/api/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  delete: (id) => request(`/api/users/${id}`, { method: "DELETE" }),
   byRole: (roleId) => request(`/api/users/by-role/${roleId}`),
   rolesFor: (userId) => request(`/api/users/${userId}/roles`),
+  toggleActive: (userId) => request(`/api/users/${userId}/toggle-active`, { method: "PATCH" }),
   assignRole: (data) => request("/api/user-roles", { method: "POST", body: JSON.stringify(data) }),
 };
 
@@ -175,3 +179,34 @@ export const masterFormFieldsApi = {
 export const themeApi = {
   get: (boardId) => request(`/api/theme${qs({ boardId })}`),
 };
+
+// ---- CFC Workflow ----
+export const cfcApi = {
+  queue: () => request("/api/cfc/queue"),
+  getActions: (id) => request(`/api/cfc/applications/${id}/actions`),
+  getDocVerifications: (id) => request(`/api/cfc/applications/${id}/doc-verifications`),
+  availableEMs: (boardId, deptId) => request(`/api/cfc/officers/ems${qs({ boardId, deptId })}`),
+  availableClerks: (boardId, deptId) => request(`/api/cfc/officers/clerks${qs({ boardId, deptId })}`),
+  outwardToEM: (id, data) => request(`/api/cfc/applications/${id}/outward-to-em`, { method: "POST", body: JSON.stringify(data) }),
+  revertByIO: (id, data) => request(`/api/cfc/applications/${id}/revert-io`, { method: "POST", body: JSON.stringify(data) }),
+  forwardToClerk: (id, data) => request(`/api/cfc/applications/${id}/forward-to-clerk`, { method: "POST", body: JSON.stringify(data) }),
+  revertByEM: (id, data) => request(`/api/cfc/applications/${id}/revert-em`, { method: "POST", body: JSON.stringify(data) }),
+  verifyDocByClerk: (id, data) => request(`/api/cfc/applications/${id}/verify-doc/clerk`, { method: "POST", body: JSON.stringify(data) }),
+  approveByClerk: (id, data) => request(`/api/cfc/applications/${id}/approve-clerk`, { method: "POST", body: JSON.stringify(data) }),
+  revertByClerk: (id, data) => request(`/api/cfc/applications/${id}/revert-clerk`, { method: "POST", body: JSON.stringify(data) }),
+  verifyDocByEM: (id, data) => request(`/api/cfc/applications/${id}/verify-doc/em`, { method: "POST", body: JSON.stringify(data) }),
+  approveByEM: (id, data) => request(`/api/cfc/applications/${id}/approve-em`, { method: "POST", body: JSON.stringify(data) }),
+  generateChallan: (id, data) => request(`/api/cfc/applications/${id}/generate-challan`, { method: "POST", body: JSON.stringify(data) }),
+  recordPayment: (id) => request(`/api/cfc/applications/${id}/payment`, { method: "POST" }),
+  finalize: (id, data) => request(`/api/cfc/applications/${id}/finalize`, { method: "POST", body: JSON.stringify(data || {}) }),
+  uploadCertificate: (id, data) => request(`/api/cfc/applications/${id}/upload-certificate`, { method: "POST", body: JSON.stringify(data) }),
+  outwardCertificate: (id, data) => request(`/api/cfc/applications/${id}/outward-certificate`, { method: "POST", body: JSON.stringify(data || {}) }),
+  dispatch: (id, data) => request(`/api/cfc/applications/${id}/dispatch`, { method: "POST", body: JSON.stringify(data || {}) }),
+};
+
+export async function getUsersByRoleName(roleName) {
+  const roles = await rolesApi.list();
+  const role = roles.find(r => r.name === roleName);
+  if (!role) return [];
+  return usersApi.byRole(role.id);
+}

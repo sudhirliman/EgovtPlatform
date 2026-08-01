@@ -16,6 +16,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 public class AppUserController {
@@ -34,11 +36,32 @@ public class AppUserController {
     }
 
     /** Safe projection — never exposes passwordHash. */
-    public record UserView(UUID id, String name, String username, String mobile, String email,
-                            boolean active, Instant createdAt) {
+    public record UserView(UUID id, String name, String firstName, String middleName, String lastName,
+                            String username, String mobile, String email,
+                            String employeeCode, String userType, boolean active, Instant createdAt) {
         static UserView from(AppUser u) {
-            return new UserView(u.getId(), u.getName(), u.getUsername(), u.getMobile(),
-                    u.getEmail(), u.isActive(), u.getCreatedAt());
+            return new UserView(u.getId(), u.getName(), u.getFirstName(), u.getMiddleName(), u.getLastName(),
+                    u.getUsername(), u.getMobile(), u.getEmail(),
+                    u.getEmployeeCode(), u.getUserType(), u.isActive(), u.getCreatedAt());
+        }
+    }
+
+    private void applyRequest(AppUser user, CreateUserRequest req) {
+        user.setFirstName(req.firstName());
+        user.setMiddleName(req.middleName());
+        user.setLastName(req.lastName());
+        // Derive display name from parts; fall back to req.name() for legacy clients
+        String fullName = Stream.of(req.firstName(), req.middleName(), req.lastName())
+                .filter(s -> s != null && !s.isBlank())
+                .collect(Collectors.joining(" "));
+        user.setName(fullName.isBlank() ? (req.name() != null ? req.name() : "") : fullName);
+        if (req.username() != null && !req.username().isBlank()) user.setUsername(req.username());
+        if (req.mobile() != null && !req.mobile().isBlank()) user.setMobile(req.mobile());
+        user.setEmail(req.email());
+        user.setEmployeeCode(req.employeeCode());
+        if (req.userType() != null && !req.userType().isBlank()) user.setUserType(req.userType());
+        if (req.password() != null && !req.password().isBlank()) {
+            user.setPasswordHash(passwordEncoder.encode(req.password()));
         }
     }
 
@@ -53,13 +76,7 @@ public class AppUserController {
     @PreAuthorize("hasPermission(null, 'USER_MANAGE')")
     public UserView create(@Valid @RequestBody CreateUserRequest request) {
         AppUser user = new AppUser();
-        user.setName(request.name());
-        user.setUsername(request.username());
-        user.setMobile(request.mobile());
-        user.setEmail(request.email());
-        if (request.password() != null && !request.password().isBlank()) {
-            user.setPasswordHash(passwordEncoder.encode(request.password()));
-        }
+        applyRequest(user, request);
         return UserView.from(appUserRepository.save(user));
     }
 
@@ -77,6 +94,35 @@ public class AppUserController {
     @GetMapping("/api/users/{userId}/roles")
     public List<UserRoleResponse> rolesFor(@PathVariable UUID userId) {
         return userRoleRepository.findByUserId(userId).stream().map(UserRoleResponse::from).toList();
+    }
+
+    @Transactional
+    @PatchMapping("/api/users/{userId}/toggle-active")
+    @PreAuthorize("hasPermission(null, 'USER_MANAGE')")
+    public UserView toggleActive(@PathVariable UUID userId) {
+        AppUser user = appUserRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
+        user.setActive(!user.isActive());
+        return UserView.from(appUserRepository.save(user));
+    }
+
+    @Transactional
+    @PutMapping("/api/users/{userId}")
+    @PreAuthorize("hasPermission(null, 'USER_MANAGE')")
+    public UserView update(@PathVariable UUID userId, @RequestBody CreateUserRequest request) {
+        AppUser user = appUserRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
+        applyRequest(user, request);
+        return UserView.from(appUserRepository.save(user));
+    }
+
+    @Transactional
+    @DeleteMapping("/api/users/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasPermission(null, 'USER_MANAGE')")
+    public void delete(@PathVariable UUID userId) {
+        userRoleRepository.deleteAll(userRoleRepository.findByUserId(userId));
+        appUserRepository.deleteById(userId);
     }
 
     @Transactional

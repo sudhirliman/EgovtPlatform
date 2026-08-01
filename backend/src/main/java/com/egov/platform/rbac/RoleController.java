@@ -39,11 +39,7 @@ public class RoleController {
     @PreAuthorize("hasPermission(null, 'ROLE_MANAGE')")
     public RoleResponse create(@RequestBody RoleRequest request) {
         Role role = new Role();
-        role.setName(request.name());
-        role.setGlobalScope(request.hasGlobalScope());
-        if (request.permissionIds() != null) {
-            role.setPermissions(new HashSet<>(permissionRepository.findAllById(request.permissionIds())));
-        }
+        applyRequest(role, request);
         return RoleResponse.from(roleRepository.save(role));
     }
 
@@ -53,11 +49,26 @@ public class RoleController {
     public RoleResponse update(@PathVariable UUID id, @RequestBody RoleRequest request) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Role not found: " + id));
+        applyRequest(role, request);
+        return RoleResponse.from(roleRepository.save(role));
+    }
+
+    @Transactional
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasPermission(null, 'ROLE_MANAGE')")
+    public void delete(@PathVariable UUID id) {
+        roleRepository.deleteById(id);
+    }
+
+    private void applyRequest(Role role, RoleRequest request) {
         role.setName(request.name());
         role.setGlobalScope(request.hasGlobalScope());
+        if (request.level() != null) role.setLevel(request.level());
+        role.setDisplayName(request.displayName());
+        role.setDescription(request.description());
         if (request.permissionIds() != null) {
             role.setPermissions(new HashSet<>(permissionRepository.findAllById(request.permissionIds())));
         }
-        return RoleResponse.from(roleRepository.save(role));
     }
 }

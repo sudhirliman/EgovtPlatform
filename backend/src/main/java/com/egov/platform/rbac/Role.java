@@ -28,6 +28,15 @@ public class Role {
     @Column(name = "has_global_scope", nullable = false)
     private boolean globalScope = false;
 
+    @Column(name = "level", nullable = false)
+    private int level = 99;
+
+    @Column(name = "display_name", length = 100)
+    private String displayName;
+
+    @Column(name = "description", length = 500)
+    private String description;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "role_permission",

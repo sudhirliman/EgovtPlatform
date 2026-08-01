@@ -36,6 +36,21 @@ public class AppUser {
     @Column(name = "password_hash")
     private String passwordHash;
 
+    @Column(name = "employee_code", length = 20)
+    private String employeeCode;
+
+    @Column(name = "first_name", length = 100)
+    private String firstName;
+
+    @Column(name = "middle_name", length = 100)
+    private String middleName;
+
+    @Column(name = "last_name", length = 100)
+    private String lastName;
+
+    @Column(name = "user_type", length = 20, nullable = false)
+    private String userType = "INTERNAL";
+
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 

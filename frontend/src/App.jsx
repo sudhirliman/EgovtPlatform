@@ -14,8 +14,12 @@ import WorkflowBuilderPage from "./pages/WorkflowBuilderPage.jsx";
 import FormDesignerPage from "./pages/FormDesignerPage.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import ApplicationDetailPage from "./pages/ApplicationDetailPage.jsx";
+import CfcQueuePage from "./pages/CfcQueuePage.jsx";
+import CfcApplicationDetailPage from "./pages/CfcApplicationDetailPage.jsx";
 import PaymentsPage from "./pages/PaymentsPage.jsx";
 import UsersRolesPage from "./pages/UsersRolesPage.jsx";
+import RolesPage from "./pages/RolesPage.jsx";
+import UsersPage from "./pages/UsersPage.jsx";
 import ReportsPage from "./pages/ReportsPage.jsx";
 import TicketsPage from "./pages/TicketsPage.jsx";
 
@@ -37,8 +41,12 @@ export default function App() {
           <Route path="form-designer" element={<FormDesignerPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="applications/:id" element={<ApplicationDetailPage />} />
+          <Route path="cfc/queue" element={<CfcQueuePage />} />
+          <Route path="cfc/applications/:id" element={<CfcApplicationDetailPage />} />
           <Route path="payments" element={<PaymentsPage />} />
           <Route path="users-roles" element={<UsersRolesPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="roles" element={<RolesPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="tickets" element={<TicketsPage />} />
         </Route>

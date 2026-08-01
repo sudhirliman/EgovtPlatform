@@ -21,6 +21,8 @@ import {
   CheckCircle2,
   Clock,
   User,
+  ClipboardList,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.jsx";
 
@@ -76,6 +78,7 @@ const NAV_GROUPS = [
     label: "Operations",
     items: [
       { to: "/applications", label: "Applications", icon: FileText },
+      { to: "/cfc/queue", label: "CFC Queue", icon: ClipboardList },
       { to: "/payments", label: "Payments", icon: CreditCard },
       { to: "/tickets", label: "Support Tickets", icon: LifeBuoy },
     ],
@@ -83,7 +86,8 @@ const NAV_GROUPS = [
   {
     label: "Administration",
     items: [
-      { to: "/users-roles", label: "Users & Roles", icon: Users },
+      { to: "/users", label: "Users", icon: Users },
+      { to: "/roles", label: "Roles", icon: Shield },
       { to: "/reports", label: "Reports & Analytics", icon: BarChart3 },
     ],
   },

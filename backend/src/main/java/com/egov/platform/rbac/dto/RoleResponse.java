@@ -16,9 +16,11 @@ import java.util.UUID;
  * permission codes while the session is still open, so nothing lazy is left
  * in the object graph handed to Jackson.
  */
-public record RoleResponse(UUID id, String name, boolean hasGlobalScope, List<String> permissionCodes) {
+public record RoleResponse(UUID id, String name, String displayName, String description,
+                            int level, boolean hasGlobalScope, List<String> permissionCodes) {
     public static RoleResponse from(Role role) {
-        List<String> codes = role.getPermissions().stream().map(Permission::getCode).toList();
-        return new RoleResponse(role.getId(), role.getName(), role.isGlobalScope(), codes);
+        List<String> codes = role.getPermissions().stream().map(Permission::getCode).sorted().toList();
+        return new RoleResponse(role.getId(), role.getName(), role.getDisplayName(),
+                role.getDescription(), role.getLevel(), role.isGlobalScope(), codes);
     }
 }

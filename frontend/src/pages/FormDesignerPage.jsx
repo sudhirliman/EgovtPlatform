@@ -154,6 +154,9 @@ export default function FormDesignerPage() {
       required: master.defaultRequired,
       displayOrder: fields.length,
       options: parseOptions(master.validationRules),
+      conditionFieldKey: "", conditionOperator: "EQUALS", conditionValue: "",
+      requiredConditionFieldKey: "", requiredConditionOperator: "EQUALS", requiredConditionValue: "",
+      crossValidateFieldKey: "", crossValidateOperator: "GREATER_THAN_OR_EQUAL", crossValidateMessage: "",
     });
     setShowLibrary(false);
     setFieldPanel({});

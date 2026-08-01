@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { applicationsApi, boardsApi, departmentsApi, servicesApi } from "../api/client";
+import { applicationsApi, boardsApi, departmentsApi, servicesApi, workflowApi } from "../api/client";
 import { PageHeader, Card, Table, Badge, ErrorBanner, LoadingRow, Button, Input, Select } from "../components/ui.jsx";
 
 const STATUS_TONE = {
@@ -64,7 +64,7 @@ export default function ApplicationsPage() {
 
   async function submit(id) {
     try {
-      await applicationsApi.submit(id);
+      await workflowApi.submit(id);
       await load();
     } catch (e) {
       setError(e.message);

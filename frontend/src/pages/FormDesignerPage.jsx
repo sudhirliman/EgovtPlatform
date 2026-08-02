@@ -443,6 +443,9 @@ export default function FormDesignerPage() {
 
   const [fields, setFields]           = useState([]);
   const [documents, setDocuments]     = useState([]);
+  const [libraryFields, setLibraryFields] = useState([]);
+  const [sidebarTab, setSidebarTab]   = useState("types");
+  const [librarySearch, setLibrarySearch] = useState("");
   const [error, setError]             = useState(null);
   const [loading, setLoading]         = useState(true);
   const [showPreview, setShowPreview] = useState(false);
@@ -455,7 +458,12 @@ export default function FormDesignerPage() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const dragIndex = useRef(null);
 
-  useEffect(() => { boardsApi.list().then(setBoards).catch(e => setError(e.message)).finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    Promise.all([boardsApi.list(), masterFormFieldsApi.list()])
+      .then(([b, lib]) => { setBoards(b); setLibraryFields(lib.filter(f => f.active)); })
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
   useEffect(() => {
     if (!boardId) { setDepartments([]); return; }
     departmentsApi.list(boardId).then(setDepartments).catch(e => setError(e.message));
@@ -543,10 +551,36 @@ export default function FormDesignerPage() {
     setFieldPanel(f);
   }
 
+  // ── Library insert ────────────────────────────────────────────────────────
+
+  function insertFromLibrary(mf) {
+    if (!serviceId) { setError("Please select a board, department, and service first."); return; }
+    setFieldForm({
+      fieldKey: mf.fieldKey,
+      label: mf.label,
+      labelMarathi: mf.labelMarathi || "",
+      type: mf.type,
+      required: mf.defaultRequired,
+      fullWidth: mf.fullWidth || false,
+      displayOrder: fields.length,
+      options: parseOptions(mf.validationRules),
+      conditionFieldKey: "", conditionOperator: "EQUALS", conditionValue: "",
+      requiredConditionFieldKey: "", requiredConditionOperator: "EQUALS", requiredConditionValue: "",
+      crossValidateFieldKey: "", crossValidateOperator: "GREATER_THAN_OR_EQUAL", crossValidateMessage: "",
+    });
+    setFieldPanel({});
+  }
+
   // ── Drag handlers ─────────────────────────────────────────────────────────
 
   async function handleCanvasDrop(e, dropIdx) {
     e.preventDefault();
+    const libraryId = e.dataTransfer.getData("libraryFieldId");
+    if (libraryId) {
+      const mf = libraryFields.find(f => f.id === libraryId);
+      if (mf) { setCanvasDragOver(false); setDragOverIndex(null); insertFromLibrary(mf); }
+      return;
+    }
     const paletteType = e.dataTransfer.getData("paletteType");
     if (paletteType) {
       setCanvasDragOver(false);
@@ -614,31 +648,115 @@ export default function FormDesignerPage() {
     <div className="-mx-6 -mt-6 flex" style={{ minHeight: "calc(100vh - 64px)" }}>
 
       {/* ── Left palette sidebar ────────────────────────────────────────── */}
-      <div className="w-52 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-y-auto">
-        <div className="px-4 pt-5 pb-3">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Field Types</p>
+      <div className="w-56 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
+        {/* Tab switcher */}
+        <div className="flex border-b border-slate-200 flex-shrink-0">
+          <button
+            onClick={() => setSidebarTab("types")}
+            className={`flex-1 py-2.5 text-[11px] font-semibold transition-colors ${sidebarTab === "types" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/40" : "text-slate-400 hover:text-slate-600"}`}
+          >
+            FIELD TYPES
+          </button>
+          <button
+            onClick={() => setSidebarTab("library")}
+            className={`flex-1 py-2.5 text-[11px] font-semibold transition-colors ${sidebarTab === "library" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/40" : "text-slate-400 hover:text-slate-600"}`}
+          >
+            LIBRARY
+            {libraryFields.length > 0 && (
+              <span className="ml-1 rounded-full bg-slate-100 px-1 py-0.5 text-[9px] font-bold text-slate-500">{libraryFields.length}</span>
+            )}
+          </button>
         </div>
-        <div className="px-3 pb-4 space-y-1">
-          {PALETTE.map(({ type, label, icon: Icon, color }) => (
-            <div
-              key={type}
-              draggable
-              onDragStart={e => {
-                e.dataTransfer.setData("paletteType", type);
-                e.dataTransfer.effectAllowed = "copy";
-              }}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 cursor-grab active:cursor-grabbing hover:bg-slate-50 select-none group transition-colors"
-            >
-              <span className={`flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0 ${color}`}>
-                <Icon size={13} />
-              </span>
-              <span className="text-[12px] font-medium text-slate-600 group-hover:text-slate-900">{label}</span>
+
+        {sidebarTab === "types" ? (
+          /* ── Field Types palette ── */
+          <div className="flex flex-col flex-1 overflow-y-auto">
+            <div className="px-3 py-3 space-y-1 flex-1">
+              {PALETTE.map(({ type, label, icon: Icon, color }) => (
+                <div
+                  key={type}
+                  draggable
+                  onDragStart={e => {
+                    e.dataTransfer.setData("paletteType", type);
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 cursor-grab active:cursor-grabbing hover:bg-slate-50 select-none group transition-colors"
+                >
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0 ${color}`}>
+                    <Icon size={13} />
+                  </span>
+                  <span className="text-[12px] font-medium text-slate-600 group-hover:text-slate-900">{label}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="mt-auto border-t border-slate-100 px-4 py-3">
-          <p className="text-[10px] text-slate-400">Drag a field type onto the canvas to add it</p>
-        </div>
+            <div className="border-t border-slate-100 px-4 py-3 flex-shrink-0">
+              <p className="text-[10px] text-slate-400">Drag onto canvas or click Library tab for saved fields</p>
+            </div>
+          </div>
+        ) : (
+          /* ── Library tab ── */
+          <div className="flex flex-col flex-1 overflow-hidden">
+            {/* Search */}
+            <div className="px-3 py-2.5 border-b border-slate-100 flex-shrink-0">
+              <input
+                value={librarySearch}
+                onChange={e => setLibrarySearch(e.target.value)}
+                placeholder="Search fields…"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none"
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+              {libraryFields.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-[11px] text-slate-400">No library fields yet.</p>
+                  <p className="text-[10px] text-slate-300 mt-1">Add fields in Master Setup → Form Fields</p>
+                </div>
+              ) : (() => {
+                const q = librarySearch.toLowerCase();
+                const filtered = libraryFields.filter(f =>
+                  f.label.toLowerCase().includes(q) ||
+                  f.fieldKey.toLowerCase().includes(q) ||
+                  (f.labelMarathi || "").toLowerCase().includes(q)
+                );
+                if (filtered.length === 0) return (
+                  <p className="py-6 text-center text-[11px] text-slate-400">No results</p>
+                );
+                return filtered.map(mf => {
+                  const meta = TYPE_META[mf.type] || TYPE_META["TEXT"];
+                  const Icon = meta.icon;
+                  return (
+                    <div
+                      key={mf.id}
+                      draggable
+                      onDragStart={e => {
+                        e.dataTransfer.setData("libraryFieldId", mf.id);
+                        e.dataTransfer.effectAllowed = "copy";
+                      }}
+                      onClick={() => insertFromLibrary(mf)}
+                      title={`Click to add "${mf.label}" to form`}
+                      className="flex items-center gap-2.5 rounded-xl border border-slate-100 px-3 py-2.5 cursor-pointer hover:border-blue-200 hover:bg-blue-50/50 select-none group transition-colors"
+                    >
+                      <span className={`flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0 ${meta.color}`}>
+                        <Icon size={13} />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-semibold text-slate-700 group-hover:text-blue-700 truncate">{mf.label}</div>
+                        {mf.labelMarathi && <div className="text-[10px] text-slate-400 truncate">{mf.labelMarathi}</div>}
+                        <div className="text-[10px] text-slate-400 font-mono truncate">{mf.fieldKey}</div>
+                      </div>
+                      {mf.systemDefined && (
+                        <span className="rounded bg-violet-50 px-1 py-0.5 text-[9px] font-bold text-violet-500 flex-shrink-0">SYS</span>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+            <div className="border-t border-slate-100 px-3 py-2.5 flex-shrink-0">
+              <p className="text-[10px] text-slate-400">Click or drag a field to add it to the canvas</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Main canvas area ─────────────────────────────────────────────── */}

@@ -79,9 +79,11 @@ public class MasterFormFieldController {
     private void applyRequest(MasterFormField field, MasterFormFieldRequest request) {
         field.setFieldKey(request.fieldKey());
         field.setLabel(request.label());
+        field.setLabelMarathi(request.labelMarathi());
         field.setType(request.type());
         field.setValidationRules(request.validationRules());
         if (request.defaultRequired() != null) field.setDefaultRequired(request.defaultRequired());
         if (request.active() != null) field.setActive(request.active());
+        if (request.fullWidth() != null) field.setFullWidth(request.fullWidth());
     }
 }

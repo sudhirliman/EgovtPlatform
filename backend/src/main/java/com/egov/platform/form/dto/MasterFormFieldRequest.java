@@ -10,5 +10,7 @@ public record MasterFormFieldRequest(
         @NotNull FormField.FieldType type,
         String validationRules,
         Boolean defaultRequired,
-        Boolean active
+        Boolean active,
+        String labelMarathi,
+        Boolean fullWidth
 ) {}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { ticketsApi } from "../api/client";
+import { ticketsApi, applicationsApi } from "../api/client";
 import { useAuth } from "../auth/AuthContext.jsx";
 import {
   RefreshCw, Plus, X, Send, AlertCircle, MessageSquare,
@@ -49,9 +49,9 @@ const inp = "w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-sl
 
 // ── Create Ticket Modal ───────────────────────────────────────────────────
 
-function CreateTicketModal({ categories, userId, onClose, onCreated }) {
+function CreateTicketModal({ categories, applications, userId, onClose, onCreated }) {
   const [form, setForm] = useState({
-    subject: "", description: "", categoryId: categories[0]?.id || "", priority: "MEDIUM",
+    subject: "", description: "", categoryId: categories[0]?.id || "", priority: "MEDIUM", applicationId: "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -67,8 +67,9 @@ function CreateTicketModal({ categories, userId, onClose, onCreated }) {
         subject: form.subject,
         description: form.description,
         categoryId: form.categoryId,
+        priority: form.priority,
         raisedByUserId: userId,
-        applicationId: null,
+        applicationId: form.applicationId || null,
       });
       onCreated();
     } catch (e) {
@@ -89,6 +90,16 @@ function CreateTicketModal({ categories, userId, onClose, onCreated }) {
           <Field label="Subject" required>
             <input required value={form.subject} onChange={e => set("subject", e.target.value)}
               className={inp} placeholder="Brief description of the issue" />
+          </Field>
+          <Field label="Related Application (optional)">
+            <select value={form.applicationId} onChange={e => set("applicationId", e.target.value)} className={inp}>
+              <option value="">— General Query (not linked to an application) —</option>
+              {applications.map(a => (
+                <option key={a.id} value={a.id}>
+                  {a.applicationNo || a.id.slice(0, 8).toUpperCase()} · {a.status}
+                </option>
+              ))}
+            </select>
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Category" required>
@@ -288,6 +299,7 @@ export default function TicketsPage() {
   const { user } = useAuth();
   const [tickets, setTickets]         = useState([]);
   const [categories, setCategories]   = useState([]);
+  const [applications, setApplications] = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState(null);
   const [search, setSearch]           = useState("");
@@ -300,9 +312,14 @@ export default function TicketsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [t, c] = await Promise.all([ticketsApi.list(), ticketsApi.categories()]);
+      const [t, c, apps] = await Promise.all([
+        ticketsApi.list(),
+        ticketsApi.categories(),
+        applicationsApi.list(),
+      ]);
       setTickets(t);
       setCategories(c);
+      setApplications(apps || []);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -460,6 +477,7 @@ export default function TicketsPage() {
       {showCreate && user && (
         <CreateTicketModal
           categories={categories}
+          applications={applications}
           userId={user.id}
           onClose={() => setShowCreate(false)}
           onCreated={() => { setShowCreate(false); load(); }}

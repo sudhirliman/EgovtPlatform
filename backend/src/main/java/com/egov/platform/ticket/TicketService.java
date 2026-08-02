@@ -25,7 +25,8 @@ public class TicketService {
     }
 
     @Transactional
-    public SupportTicket create(UUID applicationId, UUID raisedByUserId, UUID categoryId, String subject, String description) {
+    public SupportTicket create(UUID applicationId, UUID raisedByUserId, UUID categoryId, String subject,
+                                 String description, String priority) {
         SupportTicket ticket = new SupportTicket();
         ticket.setTicketNo("TCK-" + System.currentTimeMillis());
         ticket.setApplicationId(applicationId);
@@ -33,6 +34,9 @@ public class TicketService {
         ticket.setCategoryId(categoryId);
         ticket.setSubject(subject);
         ticket.setDescription(description);
+        if (priority != null) {
+            try { ticket.setPriority(SupportTicket.Priority.valueOf(priority)); } catch (IllegalArgumentException ignored) {}
+        }
         ticket = ticketRepository.save(ticket);
         recordStatus(ticket.getId(), SupportTicket.Status.OPEN, raisedByUserId);
 

@@ -43,7 +43,7 @@ public class TicketController {
     @ResponseStatus(HttpStatus.CREATED)
     public SupportTicket create(@RequestBody CreateTicketRequest request) {
         return ticketService.create(request.applicationId(), request.raisedByUserId(), request.categoryId(),
-                request.subject(), request.description());
+                request.subject(), request.description(), request.priority());
     }
 
     @GetMapping("/{ticketId}/messages")

@@ -153,7 +153,9 @@ export const paymentsApi = {
 
 // ---- Tickets ----
 export const ticketsApi = {
+  list: (raisedByUserId) => request(`/api/tickets${qs({ raisedByUserId })}`),
   listMine: (raisedByUserId) => request(`/api/tickets${qs({ raisedByUserId })}`),
+  categories: () => request("/api/tickets/categories"),
   create: (data) => request("/api/tickets", { method: "POST", body: JSON.stringify(data) }),
   messages: (ticketId) => request(`/api/tickets/${ticketId}/messages`),
   addMessage: (ticketId, data) =>

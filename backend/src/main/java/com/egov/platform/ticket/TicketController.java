@@ -16,17 +16,27 @@ public class TicketController {
     private final TicketService ticketService;
     private final SupportTicketRepository ticketRepository;
     private final TicketMessageRepository messageRepository;
+    private final TicketCategoryRepository categoryRepository;
 
     public TicketController(TicketService ticketService, SupportTicketRepository ticketRepository,
-                             TicketMessageRepository messageRepository) {
+                             TicketMessageRepository messageRepository,
+                             TicketCategoryRepository categoryRepository) {
         this.ticketService = ticketService;
         this.ticketRepository = ticketRepository;
         this.messageRepository = messageRepository;
+        this.categoryRepository = categoryRepository;
     }
 
+    /** Admin: list all tickets. User: filter by raisedByUserId. */
     @GetMapping
-    public List<SupportTicket> listMine(@RequestParam UUID raisedByUserId) {
-        return ticketRepository.findByRaisedByUserId(raisedByUserId);
+    public List<SupportTicket> list(@RequestParam(required = false) UUID raisedByUserId) {
+        if (raisedByUserId != null) return ticketRepository.findByRaisedByUserId(raisedByUserId);
+        return ticketRepository.findAll();
+    }
+
+    @GetMapping("/categories")
+    public List<TicketCategory> categories() {
+        return categoryRepository.findAll();
     }
 
     @PostMapping

@@ -1,20 +1,27 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { applicationsApi, boardsApi, departmentsApi, servicesApi, workflowApi } from "../api/client";
-import { ErrorBanner, Badge, LoadingRow } from "../components/ui.jsx";
 import {
   Home, ChevronRight, Plus, Download, Columns3,
   Search, RefreshCcw, SlidersHorizontal, FileText,
 } from "lucide-react";
 
-const STATUS_TONE = {
-  DRAFT: "default",
-  SUBMITTED: "warning",
-  IN_PROGRESS: "warning",
-  APPROVED: "success",
-  REJECTED: "danger",
-  DISPATCHED: "success",
+const STATUS_STYLE = {
+  DRAFT:       "bg-slate-100 text-slate-600",
+  SUBMITTED:   "bg-amber-100 text-amber-700",
+  IN_PROGRESS: "bg-blue-100 text-blue-700",
+  APPROVED:    "bg-emerald-100 text-emerald-700",
+  REJECTED:    "bg-red-100 text-red-700",
+  DISPATCHED:  "bg-emerald-100 text-emerald-700",
 };
+
+function StatusBadge({ status }) {
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[status] || "bg-slate-100 text-slate-600"}`}>
+      {(status || "").replace("_", " ")}
+    </span>
+  );
+}
 
 const STATUSES = ["DRAFT", "SUBMITTED", "IN_PROGRESS", "APPROVED", "REJECTED", "DISPATCHED"];
 
@@ -147,7 +154,9 @@ export default function ApplicationsPage() {
     return pages;
   }
 
-  if (loading) return <LoadingRow label="Loading applications…" />;
+  if (loading) return (
+    <div className="flex items-center justify-center py-24 text-sm text-slate-400">Loading applications…</div>
+  );
 
   return (
     <div>
@@ -184,7 +193,9 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      <ErrorBanner message={error} />
+      {error && (
+        <div className="mb-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+      )}
 
       {/* ── Filter panel ── */}
       <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -357,7 +368,7 @@ export default function ApplicationsPage() {
                       {r.serviceId?.slice(0, 8)}…
                     </td>
                     <td className="border-b border-slate-100 px-4 py-2.5">
-                      <Badge tone={STATUS_TONE[r.status] || "default"}>{r.status?.replace("_", " ")}</Badge>
+                      <StatusBadge status={r.status} />
                     </td>
                     <td className="border-b border-slate-100 px-4 py-2.5">
                       <StageBadge label={r.currentStage} />

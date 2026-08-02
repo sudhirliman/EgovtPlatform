@@ -96,8 +96,10 @@ public class FormDesignerController {
     private void applyField(FormField field, CreateFieldRequest request) {
         field.setFieldKey(request.fieldKey());
         field.setLabel(request.label());
+        field.setLabelMarathi(request.labelMarathi());
         field.setType(request.type());
         field.setRequired(request.required());
+        field.setFullWidth(request.fullWidth());
         field.setDisplayOrder(request.displayOrder());
         field.setValidationRules(request.validationRules());
         field.setConditionFieldKey(request.conditionFieldKey());

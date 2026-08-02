@@ -10,15 +10,17 @@ import java.util.UUID;
 // the same LazyInitializationException pattern fixed elsewhere (see
 // RoleResponse's javadoc). Flattening to formTemplateId avoids it entirely.
 public record FormFieldResponse(
-        UUID id, UUID formTemplateId, String fieldKey, String label, FormField.FieldType type,
-        boolean required, int displayOrder, String validationRules,
+        UUID id, UUID formTemplateId, String fieldKey, String label, String labelMarathi,
+        FormField.FieldType type, boolean required, boolean fullWidth,
+        int displayOrder, String validationRules,
         String conditionFieldKey, FormField.ConditionOperator conditionOperator, String conditionValue,
         String requiredConditionFieldKey, FormField.ConditionOperator requiredConditionOperator, String requiredConditionValue,
         String crossValidateFieldKey, FormField.CrossValidationOperator crossValidateOperator, String crossValidateMessage
 ) {
     public static FormFieldResponse from(FormField f) {
         return new FormFieldResponse(f.getId(), f.getFormTemplate().getId(), f.getFieldKey(), f.getLabel(),
-                f.getType(), f.isRequired(), f.getDisplayOrder(), f.getValidationRules(),
+                f.getLabelMarathi(), f.getType(), f.isRequired(), f.isFullWidth(),
+                f.getDisplayOrder(), f.getValidationRules(),
                 f.getConditionFieldKey(), f.getConditionOperator(), f.getConditionValue(),
                 f.getRequiredConditionFieldKey(), f.getRequiredConditionOperator(), f.getRequiredConditionValue(),
                 f.getCrossValidateFieldKey(), f.getCrossValidateOperator(), f.getCrossValidateMessage());

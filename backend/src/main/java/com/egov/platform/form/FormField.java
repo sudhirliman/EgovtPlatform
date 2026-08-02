@@ -16,7 +16,11 @@ import java.util.UUID;
 @NoArgsConstructor
 public class FormField {
 
-    public enum FieldType { TEXT, NUMBER, DATE, DROPDOWN, FILE, TEXTAREA, CHECKBOX }
+    public enum FieldType {
+        TEXT, NUMBER, DATE, DROPDOWN, FILE, TEXTAREA, CHECKBOX,
+        RADIO_BUTTONS, TOGGLE, SECTION_HEADER,
+        AADHAAR, PAN, MOBILE, GPS
+    }
     public enum ConditionOperator { EQUALS, NOT_EQUALS, IN }
     public enum CrossValidationOperator { EQUALS, NOT_EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL }
 
@@ -95,4 +99,10 @@ public class FormField {
 
     @Column(name = "cross_validate_message", length = 300)
     private String crossValidateMessage;
+
+    @Column(name = "label_marathi", length = 200)
+    private String labelMarathi;
+
+    @Column(name = "full_width", nullable = false)
+    private boolean fullWidth = false;
 }
